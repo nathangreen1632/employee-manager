@@ -116,10 +116,25 @@ const addEmployee = async (): Promise<void> => {
     managerArray.push({ name: 'None', value: null });
 
     const answers = await inquirer.prompt([
-      { type: 'input', name: 'firstName', message: 'Enter employee first name' },
-      { type: 'input', name: 'lastName', message: 'Enter employee last name' },
-      { type: 'list', name: 'roleId', message: 'Select employee role', choices: rolesArray },
-      { type: 'list', name: 'managerId', message: 'Select manager (if any)', choices: managerArray },
+      {
+        type: 'input',
+        name: 'firstName',
+        message: 'Enter employee first name'
+      },{
+        type: 'input',
+        name: 'lastName',
+        message: 'Enter employee last name'
+      },{
+        type: 'list',
+        name: 'roleId',
+        message: 'Select employee role',
+        choices: rolesArray
+      },{
+        type: 'list',
+        name: 'managerId',
+        message: 'Select manager (if any)',
+        choices: managerArray
+      },
     ]);
 
     const { firstName, lastName, roleId, managerId } = answers;
