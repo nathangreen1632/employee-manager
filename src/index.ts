@@ -233,9 +233,20 @@ const addRole = async () => {
   }));
 
   const { title, salary, departmentId } = await inquirer.prompt([
-    { type: 'input', name: 'title', message: 'Enter the role title:' },
-    { type: 'input', name: 'salary', message: 'Enter the salary:' },
-    { type: 'list', name: 'departmentId', message: 'Select a department:', choices: departmentChoices },
+    {
+      type: 'input',
+      name: 'title',
+      message: 'Enter the role title:'
+    },{
+      type: 'input',
+      name: 'salary',
+      message: 'Enter the salary:'
+    },{
+      type: 'list',
+      name: 'departmentId',
+      message: 'Select a department:',
+      choices: departmentChoices
+    },
   ]);
 
   try {
@@ -256,7 +267,12 @@ const deleteRole = async () => {
   }));
 
   const { roleId } = await inquirer.prompt([
-    { type: 'list', name: 'roleId', message: 'Select a role to delete:', choices: roleChoices },
+    {
+      type: 'list',
+      name: 'roleId',
+      message: 'Select a role to delete:',
+      choices: roleChoices
+    },
   ]);
 
   try {
@@ -280,7 +296,7 @@ const viewAllDepartments = () => {
     FROM department d
     LEFT JOIN role r ON d.id = r.department_id
     LEFT JOIN employee m ON m.role_id = r.id
-    WHERE r.title ILIKE '%Manager%' -- Ensure we only get managers
+    WHERE r.title ILIKE '%Manager%'
     ORDER BY d.id;
   `;
 
@@ -296,11 +312,13 @@ const viewAllDepartments = () => {
 
 
 const addDepartment = async () => {
-  const { departmentName } = await inquirer.prompt({
-    type: 'input',
-    name: 'departmentName',
-    message: 'Enter the new department name:',
-  });
+  const { departmentName } = await inquirer.prompt(
+    {
+      type: 'input',
+      name: 'departmentName',
+      message: 'Enter the new department name:',
+    }
+  );
 
   try {
     const query = 'INSERT INTO department (name) VALUES ($1)';
@@ -320,7 +338,12 @@ const deleteDepartment = async () => {
   }));
 
   const { departmentId } = await inquirer.prompt([
-    { type: 'list', name: 'departmentId', message: 'Select a department to delete:', choices: departmentChoices },
+    {
+      type: 'list',
+      name: 'departmentId',
+      message: 'Select a department to delete:',
+      choices: departmentChoices
+    },
   ]);
 
   try {
