@@ -24,6 +24,7 @@ This project is ideal for demonstrating how to build practical applications that
   - [Tests](#tests)
   - [License](#license)
   - [Questions](#questions)
+  - [Video Tutorial](#video-tutorial)
 
 
 ## Installation
@@ -176,3 +177,10 @@ Additionally, you can find me on GitHub to view more of my projects or collabora
 GitHub Profile: [nathangreen1632](https:www.github.com/nathangreen1632)
 
 Thank you for your interest in this project, and I look forward to connecting with you!
+
+## Video Tutorial
+To view a video tutorial of the application in action, click the link below:
+
+[Employee Manager Video Tutorial](https://youtu.be/VpXXuvKBtP4)
+
+```
