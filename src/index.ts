@@ -102,37 +102,41 @@ pool.query(query).then((res: QueryResult) => {
 });
 }
 
-const addEmployee = async () => {
-  console.log('Adding employee');
-  let rolesData: QueryResult<any> = await pool.query('SELECT * FROM role');
-  let rolesArray: any[] = rolesData.rows.map(({id, title}: any) => ({name: title, value: id}));
-  inquirer.prompt([
-    {
-      type: 'input',
-      name: 'firstName',
-      message: 'Enter employee first name'
-    },
-    {
-      type: 'input',
-      name: 'lastName',
-      message: 'Enter employee last name'
-    },
-    {
-      type: 'list',
-      name: 'roleId',
-      message: 'Select employee role',
-      choices: rolesArray
-    }
-  ]).then((answers) => {
-    const {firstName, lastName, roleId} = answers;
-    const query = 'INSERT INTO employee (first_name, last_name, role_id) VALUES ($1, $2, $3)';
-    pool.query(query, [firstName, lastName, roleId]).then(() => {
-      console.log('Employee added successfully');
-      mainMenu();
-    }).catch((err: Error) => {
-      console.error(err);
-    });
-  });
+const addEmployee = async (): Promise<void> => {
+  try {
+    const [rolesData, managersData] = await Promise.all([
+      pool.query('SELECT id, title FROM role'),
+      pool.query('SELECT id, first_name, last_name FROM employee'),
+    ]);
+
+    const rolesArray = rolesData.rows.map(({ id, title }: any) => ({ name: title, value: id }));
+    const managerArray = managersData.rows.map(({ id, first_name, last_name }: any) => ({
+      name: `${first_name} ${last_name}`,
+      value: id,
+    }));
+    managerArray.push({ name: 'None', value: null });
+
+    const answers = await inquirer.prompt([
+      { type: 'input', name: 'firstName', message: 'Enter employee first name' },
+      { type: 'input', name: 'lastName', message: 'Enter employee last name' },
+      { type: 'list', name: 'roleId', message: 'Select employee role', choices: rolesArray },
+      { type: 'list', name: 'managerId', message: 'Select manager (if any)', choices: managerArray },
+    ]);
+
+    const { firstName, lastName, roleId, managerId } = answers;
+    await pool.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)', [
+      firstName,
+      lastName,
+      roleId,
+      managerId,
+    ]);
+
+    console.log('Employee added successfully.');
+  } catch (err: any) {
+    console.error('Error adding employee:', err.message);
+  } finally {
+    mainMenu();
+  }
 };
 
 const removeEmployee = async () => {
@@ -194,16 +198,33 @@ inquirer.prompt([
 };
 
 const viewAllRoles = () => {
-  console.log('Viewing all roles');
+  console.log('Viewing all roles with manager names');
 
-  const query = 'SELECT * FROM role';
-  pool.query(query).then((res: QueryResult) => {
-    console.table(res.rows);
-    mainMenu();
-  }).catch((err: Error) => {
-    console.error(err);
-  });
+  const query = `
+      SELECT
+          r.id AS role_id,
+          r.title AS role_title,
+          r.salary AS salary,
+          d.name AS department_name,
+          CONCAT(m.first_name, ' ', m.last_name) AS manager_name
+      FROM role r
+               LEFT JOIN department d ON r.department_id = d.id
+               LEFT JOIN employee m ON m.role_id = (
+          SELECT id FROM role WHERE department_id = d.id LIMIT 1
+      )
+      ORDER BY r.id;
+  `;
+
+  pool.query(query)
+    .then((res: QueryResult) => {
+      console.table(res.rows);
+      mainMenu();
+    })
+    .catch((err: Error) => {
+      console.error('Error viewing roles:', err);
+    });
 };
+
 
 const addRole = async () => {
   const departments = await pool.query('SELECT * FROM department');
@@ -250,17 +271,30 @@ const deleteRole = async () => {
 }
 
 const viewAllDepartments = () => {
-  console.log('Viewing all departments');
+  console.log('Viewing all departments with manager names');
 
-  const query = 'SELECT * FROM department';
+  const query = `
+    SELECT 
+      d.id AS department_id,
+      d.name AS department_name,
+      COALESCE(CONCAT(m.first_name, ' ', m.last_name), 'No Manager') AS manager_name
+    FROM department d
+    LEFT JOIN role r ON d.id = r.department_id
+    LEFT JOIN employee m ON m.role_id = r.id
+    WHERE r.title ILIKE '%Manager%' -- Ensure we only get managers
+    ORDER BY d.id;
+  `;
 
-  pool.query(query).then((res: QueryResult) => {
-    console.table(res.rows);
-    mainMenu();
-  }).catch((err: Error) => {
-    console.error(err);
-  });
-}
+  pool.query(query)
+    .then((res: QueryResult) => {
+      console.table(res.rows);
+      mainMenu();
+    })
+    .catch((err: Error) => {
+      console.error('Error viewing departments:', err);
+    });
+};
+
 
 const addDepartment = async () => {
   const { departmentName } = await inquirer.prompt({

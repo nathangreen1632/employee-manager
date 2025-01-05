@@ -16,12 +16,15 @@ const pool = new Pool({
 
 const connectToDb = async () => {
   try {
-    await pool.connect();
+    const client = await pool.connect();
     console.log('Connected to the database.');
+    await client.query('SELECT NOW()');
+    client.release();
   } catch (err) {
     console.error('Error connecting to database:', err);
     process.exit(1);
   }
 };
+
 
 export { pool, connectToDb };
