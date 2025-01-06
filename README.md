@@ -181,6 +181,6 @@ Thank you for your interest in this project, and I look forward to connecting wi
 ## Video Tutorial
 To view a video tutorial of the application in action, click the link below:
 
-[Employee Manager Video Tutorial](https://youtu.be/VpXXuvKBtP4)
+[Employee Manager Video Tutorial](https://youtu.be/6z5qPHpE0Mo)
 
 ```
