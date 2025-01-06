@@ -77,4 +77,32 @@ DO $$
 
         INSERT INTO employee (first_name, last_name, role_id, manager_id)
         SELECT 'Megan', 'Scott', 13, e.id FROM employee e WHERE e.first_name = 'Ashley' AND e.last_name = 'Johnson';
+
+        UPDATE department
+        SET manager_id = (SELECT id FROM employee WHERE first_name = 'John' AND last_name = 'Butcher')
+        WHERE name = 'Human Resources';
+
+        UPDATE department
+        SET manager_id = (SELECT id FROM employee WHERE first_name = 'Jane' AND last_name = 'Fonda')
+        WHERE name = 'Engineering';
+
+        UPDATE department
+        SET manager_id = (SELECT id FROM employee WHERE first_name = 'Mark' AND last_name = 'Brown')
+        WHERE name = 'Finance';
+
+        UPDATE department
+        SET manager_id = (SELECT id FROM employee WHERE first_name = 'Emily' AND last_name = 'Davis')
+        WHERE name = 'Marketing';
+
+        UPDATE department
+        SET manager_id = (SELECT id FROM employee WHERE first_name = 'Chris' AND last_name = 'Wilson')
+        WHERE name = 'Sales';
+
+        UPDATE department
+        SET manager_id = (SELECT id FROM employee WHERE first_name = 'Jessica' AND last_name = 'Lee')
+        WHERE name = 'Legal';
+
+        UPDATE department
+        SET manager_id = (SELECT id FROM employee WHERE first_name = 'Ashley' AND last_name = 'Johnson')
+        WHERE name = 'Customer Service';
     END $$;

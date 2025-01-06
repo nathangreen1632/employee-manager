@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import {pool, connectToDb} from "./connections/connection.js";
 import {QueryResult} from "pg";
 
-connectToDb();
+connectToDb().then(() => console.log('Connected to database')).catch(err => console.error(err));
 
 console.log(chalk.bold.white(figlet.textSync('EMPLOYEE\n MANAGER', { horizontalLayout: 'full' })));
 
@@ -81,7 +81,9 @@ const mainMenu = () => {
 const viewAllEmployees = () => {
   console.log('Viewing all employees');
 
-const query = `SELECT
+const query =
+
+  `SELECT
       e.id AS employee_id,
       e.first_name AS employee_first_name,
       e.last_name AS employee_last_name,
@@ -92,7 +94,9 @@ const query = `SELECT
   FROM employee e
            LEFT JOIN role r ON e.role_id = r.id
            LEFT JOIN employee m ON e.manager_id = m.id
-           LEFT JOIN department d ON r.department_id = d.id`;
+           LEFT JOIN department d ON r.department_id = d.id
+         `;
+
 pool.query(query).then((res: QueryResult) => {
   console.table(res.rows);
   mainMenu();
@@ -214,8 +218,9 @@ inquirer.prompt([
 const viewAllRoles = () => {
   console.log('Viewing all roles with manager names');
 
-  const query = `
-      SELECT
+  const query =
+
+      `SELECT
           r.id AS role_id,
           r.title AS role_title,
           r.salary AS salary,
@@ -224,10 +229,10 @@ const viewAllRoles = () => {
       FROM role r
                LEFT JOIN department d ON r.department_id = d.id
                LEFT JOIN employee m ON m.role_id = (
-          SELECT id FROM role WHERE department_id = d.id LIMIT 1
+            SELECT id FROM role WHERE department_id = d.id LIMIT 1
       )
       ORDER BY r.id;
-  `;
+      `;
 
   pool.query(query)
     .then((res: QueryResult) => {
@@ -238,7 +243,6 @@ const viewAllRoles = () => {
       console.error('Error viewing roles:', err);
     });
 };
-
 
 const addRole = async () => {
   const departments = await pool.query('SELECT * FROM department');
@@ -301,47 +305,60 @@ const deleteRole = async () => {
 }
 
 const viewAllDepartments = () => {
-  console.log('Viewing all departments with manager names');
-
-  const query = `
-    SELECT 
-      d.id AS department_id,
-      d.name AS department_name,
-      COALESCE(CONCAT(m.first_name, ' ', m.last_name), 'No Manager') AS manager_name
-    FROM department d
-    LEFT JOIN role r ON d.id = r.department_id
-    LEFT JOIN employee m ON m.role_id = r.id
-    WHERE r.title ILIKE '%Manager%'
-    ORDER BY d.id;
-  `;
+  const query =
+    `SELECT
+        d.id AS department_id,
+        d.name AS department_name,
+        CONCAT(m.first_name, ' ', m.last_name) AS manager_name
+      FROM department d
+           LEFT JOIN employee m ON d.manager_id = m.id
+      WHERE d.manager_id IS NOT NULL
+      ORDER BY d.id;
+      `;
 
   pool.query(query)
-    .then((res: QueryResult) => {
+    .then((res) => {
       console.table(res.rows);
       mainMenu();
     })
-    .catch((err: Error) => {
-      console.error('Error viewing departments:', err);
+    .catch((err) => {
+      console.log('Error viewing departments:', err);
     });
 };
 
-
 const addDepartment = async () => {
-  const { departmentName } = await inquirer.prompt(
+  const employees = await pool.query(`
+    SELECT id, CONCAT(first_name, ' ', last_name) AS name FROM employee;
+  `);
+
+  const managerChoices = employees.rows.map(({ id, name }) => ({
+    name,
+    value: id,
+  }));
+
+  const { name, managerId } = await inquirer.prompt([
     {
       type: 'input',
-      name: 'departmentName',
-      message: 'Enter the new department name:',
-    }
-  );
+      name: 'name',
+      message: 'Enter the department name:',
+      validate: (input) => input.trim() ? true : 'Department name cannot be empty.',
+    },
+    {
+      type: 'list',
+      name: 'managerId',
+      message: 'Select a manager:',
+      choices: managerChoices,
+    },
+  ]);
 
   try {
-    const query = 'INSERT INTO department (name) VALUES ($1)';
-    await pool.query(query, [departmentName]);
+    const query = 'INSERT INTO department (name, manager_id) VALUES ($1, $2)';
+    await pool.query(query, [name.trim(), managerId]);
     console.log('Department added successfully.');
-    mainMenu();
   } catch (err) {
     console.error('Error adding department:', err);
+  } finally {
+    mainMenu();
   }
 };
 
